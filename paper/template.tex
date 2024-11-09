@@ -153,8 +153,9 @@
 
 \usepackage{csquotes} % Еще инструменты для ссылок
 
-\usepackage[style=authoryear,maxcitenames=2,backend=biber,sorting=nty]{biblatex}
-\addbibresource{references.bib}
+% \usepackage[style=authoryear,maxcitenames=2,backend=biber,sorting=nty]{biblatex}
+% \addbibresource{references.bib}
+\usepackage[numbers]{natbib}
 
 \usepackage{multicol} % Несколько колонок
 
@@ -163,7 +164,7 @@
 \usepackage{pgfplotstable}
 
 
-\author{Eduard Vladimirov, Kazachkov Daniil}
+\author{Eduard Vladimirov, Daniil Kazachkov, Vadim Strijov}
 \title{\textbf{Cross-attention and CCA in EEG}}
 \date{\today}
 
@@ -171,9 +172,18 @@
 	\maketitle
 	
 	\section*{Abstract}
-        Цель данной работы предложить способ объединения Canonical Correlation Analysis (CCA) и Attention. Наша гипотеза состоит в том, что в условиях работы с многомерными наборами данных CCA, встроенный в cross-attention, позволит лучше определять как линейные так и нелинейные отношения. Полученная модель используется для решения задачи распознавания момента удара мяча о ракетку лишь по данным ЭЭГ с использованием алгоритма \ldots для онлайн-классификации. Данные берутся из датасета Real World Table Tennis. 
-	
+        Цель данной работы - предложить способ объединения Canonical Correlation Analysis (CCA) и Attention. Наша гипотеза состоит в том, что в условиях работы с многомерными наборами данных CCA, встроенный в cross-attention, позволит лучше определять как линейные так и нелинейные отношения. Полученная модель используется для решения задачи распознавания момента удара мяча о ракетку лишь по данным ЭЭГ с использованием алгоритма \ldots для онлайн-классификации. Данные берутся из датасета Real World Table Tennis. 
+
+        $\mathbf{keywords:}$ BCI, CCA, cross-ttention, onile-classification.
+
+        \section*{Introduction}
+        Современные модели для работы с ЭЭГ представляют из себя инструмент для анализа готового датасета (\cite{pan2024emotion}), \cite{lan2020multimodal}, поэтому мы поставили перед собой цель расширить класс решаемых в online задач. \\
+        Нейрокомпьютерный интерфейс (Brain-Computer Interface, BCI) \cite{shih2012brain} считывает сигналы поверхности кортекса головного мозга, анализирует и переводит в команды исполняющей системы. Результатом измерений является временной ряд напряжений на электродах, который используется в задаче декодирования сигнала. \\
+        В качестве датасета для нашей задачи мы взяли "Real World Table Tennis" \cite{amanda2024dataset}, из которого оставили уже предобработанные данные с акселерометра и данные ЭЭГ. Обработка двух модальностей делается разными способами: cca + ..., and this ..., ... . В нашей работе мы предлагаем перейти с помощью Canonical-Correlation Analysis (CCA) в риманово латентное пространство меньшей размерности, применить энкодер [тут указать ссылку на статью, из которой возьмем encoder] и делать онлайн-классификацию. 
+        
 	\nocite{*}
-	\printbibliography
+        \bibliographystyle{unsrt} % Use a numbered bibliography style
+        \bibliography{references.bib}
+	% \printbibliography
 	
 \end{document}
