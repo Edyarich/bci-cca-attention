@@ -180,6 +180,8 @@
         \section{Introduction}
 
         Мультимодальность - мощный инструмент для улучшения качества ответов модели [What Makesz Multi-modal Learning Better than Single]. Канонический корреляционный анализ (CCA) [A Survey on Canonical Correlation Analysis] является очень популярным статистическим методом, снижения размерности двух множеств данных, при котором корреляция между парными переменными в общем подпространстве взаимно максимизируется. В таких работах как [Correlational Neural Networks], [A survey on deep multimodal learning for computer vision: advances, trends, applications, and datasets] авторы показали, что он улучшает качество в задачах сопоставления событий. Однако CCA может моделировать лишь линейные зависимости. \\
+        Существует несколько подходов по улучшению CCA, например, Kernel-CCA и Deep-CCA, каждый из которых имеет свои преимущества.  
+        \textbf{Тут вставка про такие улучшения, как Kernel CCA, Deep CCA... и их показатели}.\\
         В противоположность этому, механизм Attention находит сложные, нелинейные зависимости. Усовершенствование cross-attention позволит лучше отсеивать информацию, снизит размерность пространства и тем самым ускорит вычисления. \\
         Ставя перед собой цель использовать преимущества каждого метода, мы представляем модель CCT: Canonical-Correlation Transformer. Архитектура у нее следующая: из пакета PyRiemann (мб заменим на CNN EEGNet) [ссылка] мы берем энкодер и преобразуем поданный на вход ЭЭГ сигнал в скрытое пространство. Далее в качестве механизма внимания используем ... (дополнить, когда станет понятно). Выход модели - вероятность события принадлежать одному из четырех классов: попадание по мячу (1), нейтральное событие (0), промах по мячу (-1), попадание, после которого успешных ударов не было (2). \\    
         Наша задача: как по данным ЭЭГ игрока в настольный теннис в режиме реального времени классифицировать момент удара - типичный пример из области Brain-Computer Interface (BCI), когда необходимо эффективно работать с данными разных модальностей и классифицировать события в онлайн режиме. В качестве датасета мы взяли предобработанные данные из "Real World Table Tennis" \cite{amanda2024dataset}.\\
@@ -188,6 +190,7 @@
         \begin{itemize}
             \item про нейрокомпьютерный интерфейс
             \item про онлайн-классификацию
+            \item про emotional recognition с attnetion cca
             \item мб про аналогичные оффлайн-задачи
         \end{itemize}
         Нейрокомпьютерный интерфейс (Brain-Computer Interface, BCI) \cite{shih2012brain} считывает сигналы поверхности кортекса головного мозга, анализирует и переводит в команды исполняющей системы. Результатом измерений является временной ряд напряжений на электродах, который используется в задаче декодирования сигнала. \\
@@ -206,7 +209,7 @@
             \item отдельно Attention
             \item связь CCA + Attention (у Эдуарда из файла взять)
         \end{itemize}
-        Canonical Correlation Analysis (CCA) - стандартный инструмент для выявления линейных зависимостей между двумя наборами данных [Canonical correlation analysis: An overview with application to learning methods]. Пусть нам дано множество векторов $X\in \dR^{n_1\times m}$ и $Y\in \dR^{n_2\times m}$, где $m$ - количество векторов. Задача CCA - найти такие афинные преобразования $\bW_x, \bW_y$, которые максимизируют корелляцию между $X, Y$ в новом пространстве:
+        Canonical Correlation Analysis (CCA) - стандартный инструмент для выявления линейных зависимостей между двумя наборами данных [Canonical correlation analysis: An overview with application to learning methods]. Пусть нам дано множество векторов $X\in \dR^{n_1\times m}$ и $Y\in \dR^{n_2\times m}$, где $m$ - количество векторов. Задача CCA - найти такие афинные преобразования $\bW_x, \bW_y$, которые максимизируют корреляцию между $X, Y$ в новом пространстве:
         \begin{equation}
             \begin{aligned}
             \bW^{*}_x, \bW^{*}_y &= \arg\max_{\bW_x, \bW_y} \, \text{corr}(\bW_x\T X, \bW_y\T Y) \\
@@ -216,7 +219,107 @@
         \end{equation}
         где $\hat{\bE}[f(\bx, \by)] = \frac{1}{m}\sum\limits_{i=1}^{m}f(\bx_i, \by_i)$, матрицы ковариации $X$ и $Y$ есть $C_{11} = \frac{1}{m}XX\T \in \dR^{n_1\times n_1}$, $C_{22} = \frac{1}{m}YY\T \in \dR^{n_2\times n_2}$, а матрица кросс-ковариации X, Y есть $C_{12} = \frac{1}{m}XY\T \in\dR^{n_1\times n_2}$.
 
-        Развивая идею [Learning Relationships between Text, Audio, and Video via Deep Canonical Correlation for Multimodal Language Analysis] для решения воспользуемся методом Singular Value Decomposition (SVD, Martin and Maes 1979) для $Z = C_{11}^{-1/2}C_{12}C_{22}^{-1/2}$ и получим матрицы U, S, V. 
+        Развивая идею [Learning Relationships between Text, Audio, and Video via Deep Canonical Correlation for Multimodal Language Analysis] для решения воспользуемся методом Singular Value Decomposition (SVD, Martin and Maes 1979) для $Z = C_{11}^{-1/2}C_{12}C_{22}^{-1/2}$ и получим матрицы U, S, V. Тогда
+        \begin{equation}
+            \begin{aligned}
+                &\bW_x^* = C_{11}^{-\frac{1}{2}}U = (\frac{1}{m}XX\T)^{-\frac{1}{2}}U \\
+                &\bW_y^* = C_{22}^{-\frac{1}{2}}V = (\frac{1}{m}YY\T)^{-\frac{1}{2}}V \\
+                &\text{corr}(\bW_x\T^* X, \bW_y\T^* Y) = \text{trace}(Z\T Z)^{\frac{1}{2}}
+            \end{aligned}
+        \end{equation}
+
+        В таких работах как [Learning Relationships between Text, Audio, and Video via Deep Canonical Correlation for Multimodal Language Analysis], [Deep Canonical Correlation Analysis] раскрыт подход использования глубоких сетей для обучения нелинейных преобразований двух наборов данных в пространство, в котором данные сильно скоррелированы. Мы же рассмотрим механизм внимания [Neural machine translation by jointly learning to align and translate], который используется для определения важности разных частей входных данных. 
+
+        Механизм самовнимания определяется следующим образом:
+	
+	\begin{equation}
+		\begin{aligned}
+			&\text{attn}: \mathbb{R}^{m \times d} \times \mathbb{R}^{m \times d} \times \mathbb{R}^{m \times d} \longrightarrow \mathbb{R}^{m \times d} \\
+			&\text{attn}(Q, K, V) = \varphi\left(\frac{Q K^\top}{\sqrt{d}}\right) V
+		\end{aligned}
+		\label{attn}
+	\end{equation}
+	
+        where $Q, K, V \in \dR^{m \times d}$ represent the queries, keys, and values, respectively, and $\varphi: \dR^{m \times m} \longrightarrow \dR^{m \times m}$ is row-wise applied nonlinear function, usually softmax. The dot product between $Q$ and $K$ determines the attention weights, which are normalized using the softmax function. The result is then applied to the values $V$ to generate the output.
+	
+        Self-attention applied to the input $X \in \dR^{m \times n_1}$ is computed as:
+	
+	\begin{equation}
+		\begin{aligned}
+			&\text{self-attn}: \mathbb{R}^{m \times n_1} \longrightarrow \mathbb{R}^{m \times d} \\
+			&\text{self-attn}(X) = \text{attn}(X W_q, X W_k, X W_v)
+		\end{aligned}
+		\label{self-attn}
+	\end{equation}
+
+	where $W_q, W_k, W_v \in \dR^{n_1 \times d}$ ~--- parameter matrices
+	
+        In multihead attention, several attention heads are used in parallel, where each head computes its own attention weights and outputs. The outputs are then concatenated and linearly transformed by a weight matrix $W^Q \in \dR^{p \cdot d \times d}$:
+	
+	\begin{equation}
+		\text{multihead-attn}(Q, K, V) = [\text{head}_1, \ldots, \text{head}_p] W^Q,
+		\label{multihead-attn}
+	\end{equation}
+	
+	where $\text{head}_i = \text{self-attn}(X)$
+	
+	Cross-attention, in contrast, involves attention between two different sets of inputs. It computes attention by using one set of inputs for queries $X_1 \in \dR^{m \times d_1}$ and another set for keys and values $X_2 \in \dR^{m \times d_2}$:
+	
+	\begin{equation}
+		\text{cross-attn}(X_1, X_2) = \text{attn}(X_1 W_q, X_2 W_k, X_2 W_v) \label{cross-attn}
+	\end{equation}
+
+        \section*{CCA and attention}
+	
+	Both CCA and attention mechanisms aim to find relationships between two sets of data. However, they differ significantly in their approach and applications:
+	
+	\setlength{\extrarowheight}{3mm}
+	
+	\begin{table}[bhtp]
+		\centering
+		\begin{tabulary}{\textwidth}{|C|C|C|}
+			\hline
+			\textbf{Aspect} & \textbf{Attention} & \textbf{Canonical Correlation Analysis (CCA)} \\ 
+			\hline
+			Goal & Identify relevant parts of input sequences & Receive embeddings in the same hidden space + dimensionality reduction \\
+			\hline
+			Similarity Measure & $A = \frac{1}{\sqrt{d}} Q K\T$ ~-- attention matrix & $\text{tr}(A\T S_{12} B), \text{ s.t. } A\T S_{11} A = B\T S_{22} B = I$ \\
+			\hline
+			Optimization Goal & Minimize task-specific loss & $\max_{A,B} \text{corr}(A^T X, B^T Y)$ \\
+			\hline
+		\end{tabulary}
+		\caption{Comparison of Attention Mechanisms and CCA}
+	\end{table}
+	
+	Note that $A\T S_{12} B = \frac{1}{m} A\T X Y\T B = \frac{1}{m} A\T X \left( B\T Y \right)\T = \frac{1}{m} \widehat{Q} \widehat{K}\T $. And it's quite similar to attention matrix formula $A = \dfrac{1}{\sqrt{d}} Q K\T$. Especially, in cross attention case, where $Q$ is a linear transformation of $X_1$ and $K$ is a linear transformation of $X_2$:
+	
+	\begin{table}[bhtp]
+		\centering
+		\begin{tabulary}{\textwidth}{|C|C|C|C|C|C|}
+			\hline
+			\textbf{Attn} & \textbf{Self-attn} & \textbf{Cross-attn} & \textbf{CCA} & \textbf{CCA-X} & \textbf{CCA-Y} \\
+			\hline
+			$Q$                & $W_Q\T X$                 & $W_Q\T X$                  & $A\T X$ & $S_{11}^{-\frac{1}{2}}X$ & $S_{11}^{-\frac{1}{2}}X$  \\
+			\hline
+			$K$                & $W_K\T X$                 & $W_K\T Y$                  & $B\T Y$ & $S_{22}^{-\frac{1}{2}}Y$ & $S_{22}^{-\frac{1}{2}}Y$    \\
+			\hline
+			$V$                & $W_V\T X$                 & $W_V\T Y$                  & I & $S_{11}^{-\frac{1}{2}}X$ & $S_{22}^{-\frac{1}{2}}Y$  \\
+			\hline 
+			$\varphi$ & softmax & softmax & Id & $\text{SVD}_U$ & $\text{SVD}_V$ \\
+			\hline  
+		\end{tabulary}
+		\caption{United notation of CCA and attention}
+	\end{table}
+
+	Let's view in detail the CCA projection of $X$ to latent space:
+	\begin{equation}
+		\begin{aligned}
+			\text{CCA}_{XY}(X) &= U\T S_{11}^{-\frac{1}{2}}X = U\T X_1 \\
+			\text{CCA}_{XY}(Y) &= V\T S_{22}^{-\frac{1}{2}}Y = V\T Y_1 \\
+			Z &= S_{11}^{- \frac{1}{2}} S_{12} S_{22}^{- \frac{1}{2}} = \frac{1}{m} X_1 Y_1\T
+		\end{aligned}
+	\end{equation}
+        
 
         \section{Experiments}
         [какие-то общие слова, если нужны] Например, про то, что пробовали PyRiemann и трансформер из braincode.
@@ -235,7 +338,10 @@
 
         \subsection{Experimental Results}
         Получилась вот такая точность и почему.
-        
+
+        \section{Appendix}
+        \subsection{CCA-Attention table}
+        Приведем пример вывода значений таблицы для одного примера:
 	\nocite{*}
         \bibliographystyle{unsrt} % Use a numbered bibliography style
         \bibliography{references.bib}
